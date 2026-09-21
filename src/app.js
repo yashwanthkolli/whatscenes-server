@@ -35,15 +35,11 @@ const allowedOrigins = (
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+console.log(allowedOrigins);
+
 app.use(
   cors({
-    origin: allowedOrigins || [
-      "http://localhost:4173",
-      "http://localhost:3000",
-      "http://172.26.224.1:3000",
-      "http://172.22.192.1:3000",
-      "http://192.168.31.10:3000",
-    ],
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
