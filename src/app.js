@@ -26,9 +26,18 @@ app.set("trust proxy", 1);
 app.use(morgan("tiny", { stream: logger.stream }));
 
 // Other Middleware
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS ||
+  process.env.CLIENT_URL ||
+  ""
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || [
+    origin: allowedOrigins || [
       "http://localhost:4173",
       "http://localhost:3000",
       "http://172.26.224.1:3000",
