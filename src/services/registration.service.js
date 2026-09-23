@@ -8,6 +8,7 @@ const EventCapacity = require("../models/EventCapacity");
 const EventRegistration = require("../models/EventRegistration");
 const QuestionnaireResponse = require("../models/QuestionnaireResponse");
 const EventMatchGroup = require("../models/EventMatchGroup");
+const PrelaunchWaitlist = require("../models/PrelaunchWaitlist");
 
 const ErrorResponse = require("../utils/errorResponse");
 const {
@@ -653,6 +654,56 @@ async function initiatePayment({ registrationId, userId }) {
   };
 }
 
+const getEventRegistration = async ({ userId, eventId }) => {
+  console.log(userId.toString(), eventId);
+  const waitlistEntry = await PrelaunchWaitlist.findOne({
+    user: userId.toString(),
+    event: eventId,
+  }).populate({
+    path: "event",
+    select: "title city",
+    populate: {
+      path: "city",
+      select: "name",
+    },
+  });
+
+  if (!waitlistEntry) {
+    throw new ErrorResponse("You are not registered for this event", 404);
+  }
+
+  const event = waitlistEntry.event;
+
+  return {
+    registration: {
+      id: waitlistEntry._id,
+      status: "WAITLISTED",
+      entryType: "WAITLIST",
+      paymentStatus: "NONE",
+      paymentRequired: false,
+      joinedAt: waitlistEntry.createdAt,
+    },
+
+    event: {
+      id: event._id,
+      title: event.title,
+      city: event.city?.name || null,
+
+      // Temporary placeholder.
+      // Later this should come from EventFinancial.
+      price: 599,
+      currency: "INR",
+    },
+
+    payment: {
+      // Temporary values until payment/release logic is implemented.
+      chargedNow: 0,
+      atRelease: "₹599 / ₹999",
+      message: "₹599 / ₹999 is taken when the match is released, after notice.",
+    },
+  };
+};
+
 module.exports = {
   createRegistration,
   cancelRegistration,
@@ -660,4 +711,5 @@ module.exports = {
   exportEventRegistrationsCSV,
   uploadMatchGroups,
   initiatePayment,
+  getEventRegistration,
 };

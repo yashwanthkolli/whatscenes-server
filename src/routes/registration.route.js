@@ -6,6 +6,7 @@ const {
   paymentSuccess,
   paymentFailure,
   cancelRegistration,
+  getEventRegistration,
 } = require("../controllers/registration.controller");
 
 const { protect } = require("../middleware/auth");
@@ -25,5 +26,7 @@ router.post("/:id/payment-failure", paymentFailure);
 
 // Cancel registration
 router.post("/:id/cancel", cancelRegistration);
+
+router.get("/info/:eventId", getEventRegistration);
 
 module.exports = router;

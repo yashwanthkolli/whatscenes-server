@@ -291,3 +291,23 @@ exports.uploadMatchGroups = asyncHandler(async (req, res) => {
     data: result,
   });
 });
+
+/* =========================
+  Get Event Registration
+========================== */
+// @desc    Get User registration for an event
+// @route   GET /api/v1/registrations/info/:eventId
+// @access  Admin
+exports.getEventRegistration = asyncHandler(async (req, res) => {
+  const { eventId } = req.params;
+
+  const data = await registrationService.getEventRegistration({
+    userId: req.user._id,
+    eventId,
+  });
+
+  res.status(200).json({
+    success: true,
+    data,
+  });
+});

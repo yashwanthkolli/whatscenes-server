@@ -9,7 +9,7 @@ const {
 } = require("./services/registrationExpiryRunner.service");
 
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || "127.0.0.1";
+const HOST = process.env.HOST;
 
 // MongoDB connection
 const connectToDatabase = async () => {
@@ -34,9 +34,21 @@ connectToRedis();
 initLifecycleCron();
 initRegistrationExpiryCron();
 
-const server = app.listen(PORT, HOST, () => {
-  logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+let server;
+
+if (HOST) {
+  server = app.listen(PORT, HOST, () => {
+    logger.info(
+      `Server running in ${process.env.NODE_ENV} mode on port ${HOST}: ${PORT}`,
+    );
+  });
+} else {
+  server = app.listen(PORT, () => {
+    logger.info(
+      `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`,
+    );
+  });
+}
 
 // Graceful shutdown
 process.on("SIGTERM", () => {
