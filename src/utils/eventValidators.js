@@ -120,32 +120,56 @@ function validateCapacity(payload) {
 /* ---------------------------------- */
 function validateFinancialConfig(payload) {
   const {
-    base_price,
-    discounted_price,
+    base_price_men,
+    base_price_women,
+    discounted_price_men,
+    discounted_price_women,
     allow_partial_refund,
     partial_refund_percentage,
     refund_deadline_hours,
   } = payload;
 
-  if (base_price === undefined || base_price === null) {
-    throw new Error("base_price is required");
+  if (base_price_men === undefined || base_price_men === null) {
+    throw new Error("base_price_men is required");
   }
 
-  if (typeof base_price !== "number" || base_price < 0) {
-    throw new Error("base_price must be a non-negative number");
+  if (base_price_women === undefined || base_price_women === null) {
+    throw new Error("base_price_women is required");
   }
 
-  if (discounted_price !== undefined && discounted_price !== null) {
-    if (typeof discounted_price !== "number") {
-      throw new Error("discounted_price must be a number");
+  if (typeof base_price_men !== "number" || base_price_men < 0) {
+    throw new Error("base_price_men must be a non-negative number");
+  }
+
+  if (typeof base_price_women !== "number" || base_price_women < 0) {
+    throw new Error("base_price_women must be a non-negative number");
+  }
+
+  if (discounted_price_men !== undefined && discounted_price_men !== null) {
+    if (typeof discounted_price_men !== "number") {
+      throw new Error("discounted_price_men must be a number");
     }
 
-    if (discounted_price > base_price) {
-      throw new Error("discounted_price cannot exceed base_price");
+    if (discounted_price_men > base_price_men) {
+      throw new Error("discounted_price_men cannot exceed base_price_men");
     }
 
-    if (discounted_price < 0) {
-      throw new Error("discounted_price cannot be negative");
+    if (discounted_price_men < 0) {
+      throw new Error("discounted_price_men cannot be negative");
+    }
+  }
+
+  if (discounted_price_women !== undefined && discounted_price_women !== null) {
+    if (typeof discounted_price_women !== "number") {
+      throw new Error("discounted_price_women must be a number");
+    }
+
+    if (discounted_price_women > base_price_women) {
+      throw new Error("discounted_price_women cannot exceed base_price_women");
+    }
+
+    if (discounted_price_women < 0) {
+      throw new Error("discounted_price_women cannot be negative");
     }
   }
 

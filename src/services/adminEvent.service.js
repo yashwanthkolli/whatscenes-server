@@ -361,8 +361,10 @@ async function configureFinancial(eventId, payload) {
     });
 
     const allowedFields = [
-      "base_price",
-      "discounted_price",
+      "base_price_men",
+      "base_price_women",
+      "discounted_price_men",
+      "discounted_price_women",
       "currency",
       "allow_partial_refund",
       "partial_refund_percentage",
@@ -396,8 +398,10 @@ async function configureFinancial(eventId, payload) {
 
     if (
       existingFinancial &&
-      (sanitizedPayload.base_price !== undefined ||
-        sanitizedPayload.discounted_price !== undefined)
+      (sanitizedPayload.base_price_men !== undefined ||
+        sanitizedPayload.base_price_women !== undefined ||
+        sanitizedPayload.discounted_price_men !== undefined ||
+        sanitizedPayload.discounted_price_women !== undefined)
     ) {
       sanitizedPayload.last_price_update_at = new Date();
     }

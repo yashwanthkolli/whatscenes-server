@@ -10,13 +10,25 @@ const eventFinancialSchema = new mongoose.Schema(
       index: true,
     },
 
-    base_price: {
+    base_price_men: {
       type: Number,
       required: true,
       min: 0,
     },
 
-    discounted_price: {
+    base_price_women: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    discounted_price_men: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    discounted_price_women: {
       type: Number,
       default: null,
       min: 0,
@@ -48,7 +60,7 @@ const eventFinancialSchema = new mongoose.Schema(
       type: Date,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("EventFinancial", eventFinancialSchema);

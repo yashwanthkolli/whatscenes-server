@@ -96,15 +96,26 @@ async function validateEventBeforePublish(eventId, session = null) {
 
   if (!financial) throw new Error("Financial configuration missing");
 
-  if (financial.base_price < 0) {
-    throw new Error("Base price invalid");
+  if (financial.base_price_men < 0) {
+    throw new Error("Men Base price invalid");
+  }
+
+  if (financial.base_price_women < 0) {
+    throw new Error("Women Base price invalid");
   }
 
   if (
-    financial.discounted_price &&
-    financial.discounted_price > financial.base_price
+    financial.discounted_price_men &&
+    financial.discounted_price_men > financial.base_price_men
   ) {
-    throw new Error("Discounted price cannot exceed base price");
+    throw new Error("Men Discounted price cannot exceed base price");
+  }
+
+  if (
+    financial.discounted_price_women &&
+    financial.discounted_price_women > financial.base_price_women
+  ) {
+    throw new Error("Women Discounted price cannot exceed base price");
   }
 
   if (

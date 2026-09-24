@@ -6,6 +6,7 @@ const {
   getActiveQuestionnaire,
   saveDraft,
   submitQuestionnaire,
+  updateQuestionnaireAnswers,
 } = require("../controllers/questionnaire.controller");
 const { requireProfileCompletion } = require("../middleware/profileCompletion");
 
@@ -17,5 +18,6 @@ router.get(
 );
 router.patch("/:questionnaireKey/draft", protect, saveDraft);
 router.post("/:questionnaireKey/submit", protect, submitQuestionnaire);
+router.patch("/:questionnaireKey/answers", protect, updateQuestionnaireAnswers);
 
 module.exports = router;

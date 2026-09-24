@@ -285,10 +285,16 @@ async function getPublicEventDetail({ city, slug, user = null }) {
     const spotsLeft = Math.max(totalCapacity - booked - reserved, 0);
 
     // Pricing
-    const price = financial?.discounted_price ?? financial?.base_price ?? 0;
-    const hasDiscount =
-      financial?.discounted_price &&
-      financial.discounted_price < financial.base_price;
+    const priceForMen =
+      financial?.discounted_price_men ?? financial?.base_price_men ?? 0;
+    const priceForWomen =
+      financial?.discounted_price_women ?? financial?.base_price_women ?? 0;
+    const hasDiscountForMen =
+      financial?.discounted_price_men &&
+      financial.discounted_price_men < financial.base_price_men;
+    const hasDiscountForWomen =
+      financial?.discounted_price_women &&
+      financial.discounted_price_women < financial.base_price_women;
 
     // Timeline Status
     const now = new Date();
@@ -331,10 +337,13 @@ async function getPublicEventDetail({ city, slug, user = null }) {
       },
 
       pricing: {
-        price,
+        priceForMen,
+        priceForWomen,
         currency: financial?.currency || "INR",
-        hasDiscount,
-        originalPrice: financial?.base_price || null,
+        hasDiscountForMen,
+        hasDiscountForWomen,
+        originalPriceForMen: financial?.base_price_men || null,
+        originalPriceForWomen: financial?.base_price_women || null,
       },
 
       capacity: {

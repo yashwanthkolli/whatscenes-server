@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const {
   getActiveQuestionnaireBase,
 } = require("../services/questionnaireDiscovery");
+const questionnaireService = require("../services/questionnaire.service");
 const {
   invalidateProfileQuestionnaireCache,
 } = require("../cache/invalidation");
@@ -530,6 +531,31 @@ const submitQuestionnaire = asyncHandler(async (req, res, next) => {
   }
 });
 
+/* =========================
+  UPDATE QUESTIONNAIRE ANSWERS
+========================== */
+// @desc    Submit Draft as Final Response to Questionnaire
+// @route   PATCH /api/v1/questionnaires/:questionnaireKey/answers
+// @access  Private
+const updateQuestionnaireAnswers = asyncHandler(async (req, res) => {
+  const { questionnaireKey } = req.params;
+  const { answers } = req.body;
+
+  const result = await questionnaireService.updateQuestionnaireAnswers({
+    userId: req.user._id,
+    questionnaireKey,
+    answers,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {
+      response: result.response,
+      responseType: result.responseType,
+    },
+  });
+});
+
 module.exports = {
   createQuestionnaire,
   createQuestionnaireVersion,
@@ -538,4 +564,5 @@ module.exports = {
   getActiveQuestionnaire,
   saveDraft,
   submitQuestionnaire,
+  updateQuestionnaireAnswers,
 };
