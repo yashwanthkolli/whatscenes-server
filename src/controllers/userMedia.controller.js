@@ -12,6 +12,8 @@ const uploadProfilePicture = asyncHandler(async (req, res, next) => {
 
   const user = req.user;
 
+  console.log(req.user);
+
   // Limit number of profile pictures
   if (user.profilePictures.length >= 5) {
     return next(
