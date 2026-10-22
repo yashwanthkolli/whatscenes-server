@@ -1,16 +1,16 @@
-const ErrorResponse = require('../utils/errorResponse');
-const asyncHandler = require('../utils/asyncHandler');
-const { verifyOtp, sendOtp } = require('../services/otp.service');
-const User = require('../models/User');
-const RefreshToken = require('../models/RefreshToken');
+const ErrorResponse = require("../utils/errorResponse");
+const asyncHandler = require("../utils/asyncHandler");
+const { verifyOtp, sendOtp } = require("../services/otp.service");
+const User = require("../models/User");
+const RefreshToken = require("../models/RefreshToken");
 const {
   generateAccessToken,
   generateRefreshToken,
   hashToken,
-} = require('../utils/jwtUtils');
-const mongoose = require('mongoose');
-const crypto = require('crypto');
-const { normalizePhone } = require('../utils/phoneUtils');
+} = require("../utils/jwtUtils");
+const mongoose = require("mongoose");
+const crypto = require("crypto");
+const { normalizePhone } = require("../utils/phoneUtils");
 
 /* =========================
   OTP LOGIN
@@ -22,9 +22,7 @@ const loginWithOtp = asyncHandler(async (req, res, next) => {
   const { countryCode, phone, otp } = req.body;
 
   if (!countryCode || !phone || !otp) {
-    return next(
-      new ErrorResponse('Phone number and OTP are required', 400)
-    );
+    return next(new ErrorResponse("Phone number and OTP are required", 400));
   }
 
   const session = await mongoose.startSession();
@@ -39,21 +37,19 @@ const loginWithOtp = asyncHandler(async (req, res, next) => {
           number: phone,
         },
         otp,
-        purpose: 'login',
+        purpose: "login",
       },
-      session
+      session,
     );
 
     // Find or create user
     let user = await User.findOne({
-      'phone.countryCode': countryCode,
-      'phone.number': phone,
+      "phone.countryCode": countryCode,
+      "phone.number": phone,
     }).session(session);
 
-    if (user && user.status === 'deleted') {
-      return next(
-        new ErrorResponse('Account has been deleted', 403)
-      );
+    if (user && ["deleted", "suspended"].includes(user.status)) {
+      return next(new ErrorResponse("Account has been deleted", 403));
     }
 
     if (!user) {
@@ -65,11 +61,13 @@ const loginWithOtp = asyncHandler(async (req, res, next) => {
               number: phone,
             },
             phoneVerified: true,
-            status: 'active',
+            status: "active",
           },
-        ], { session });
+        ],
+        { session },
+      );
 
-        user = user[0];
+      user = user[0];
     } else {
       if (!user.phoneVerified) {
         user.phoneVerified = true;
@@ -77,7 +75,7 @@ const loginWithOtp = asyncHandler(async (req, res, next) => {
 
       // Update login metadata
       user.lastLoginAt = new Date();
-      user.lastLoginMethod = 'otp';
+      user.lastLoginMethod = "otp";
       await user.save({ session });
     }
 
@@ -87,32 +85,37 @@ const loginWithOtp = asyncHandler(async (req, res, next) => {
     const tokenFamily = crypto.randomUUID();
 
     // Store hashed refresh token in DB
-    await RefreshToken.create([{
-      user: user._id,
-      tokenHash: hashToken(refreshToken),
-      tokenFamily,
-      expiresAt: new Date(
-        Date.now() + process.env.REFRESH_TOKEN_EXPIRE * 24 * 60 * 60 * 1000 
-      ),
-      userAgent: req.headers['user-agent'],
-      ipAddress: req.ip,
-    }], { session });
+    await RefreshToken.create(
+      [
+        {
+          user: user._id,
+          tokenHash: hashToken(refreshToken),
+          tokenFamily,
+          expiresAt: new Date(
+            Date.now() + process.env.REFRESH_TOKEN_EXPIRE * 24 * 60 * 60 * 1000,
+          ),
+          userAgent: req.headers["user-agent"],
+          ipAddress: req.ip,
+        },
+      ],
+      { session },
+    );
 
     await session.commitTransaction();
     session.endSession();
 
     // Set Cookies
-    res.cookie('accessToken', accessToken, {
+    res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000, 
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000,
     });
 
-    res.cookie('refreshToken', refreshToken, {
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
       maxAge: process.env.REFRESH_TOKEN_EXPIRE * 24 * 60 * 60 * 1000,
     });
 
@@ -120,7 +123,7 @@ const loginWithOtp = asyncHandler(async (req, res, next) => {
       success: true,
       accessToken,
       refreshToken,
-      user
+      user,
       // user: {
       //   id: user._id,
       //   role: user.role,
@@ -138,24 +141,19 @@ const loginWithOtp = asyncHandler(async (req, res, next) => {
 // @route   POST /api/v1/auth/logout
 // @access  Private
 const logout = asyncHandler(async (req, res, next) => {
-  const token =
-    req.cookies.refreshToken ||
-    req.body.refreshToken;
+  const token = req.cookies.refreshToken || req.body.refreshToken;
 
   if (token) {
     const hashed = hashToken(token);
-    await RefreshToken.updateOne(
-      { tokenHash: hashed },
-      { isRevoked: true }
-    );
+    await RefreshToken.updateOne({ tokenHash: hashed }, { isRevoked: true });
   }
 
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
 
   res.status(200).json({
     success: true,
-    message: 'Logged out successfully',
+    message: "Logged out successfully",
   });
 });
 
@@ -163,12 +161,10 @@ const logout = asyncHandler(async (req, res, next) => {
 // @route   POST /api/v1/auth/refresh
 // @access  Public
 const refreshAccessToken = asyncHandler(async (req, res, next) => {
-  const token =
-    req.cookies.refreshToken ||
-    req.body.refreshToken;
+  const token = req.cookies.refreshToken || req.body.refreshToken;
 
   if (!token) {
-    return next(new ErrorResponse('Refresh token required', 401));
+    return next(new ErrorResponse("Refresh token required", 401));
   }
 
   const hashed = hashToken(token);
@@ -184,25 +180,25 @@ const refreshAccessToken = asyncHandler(async (req, res, next) => {
     }).session(session);
 
     if (!existing) {
-      throw new ErrorResponse('Invalid refresh token', 401);
+      throw new ErrorResponse("Invalid refresh token", 401);
     }
 
     // If token already revoked- REPLAY ATTACK
     if (existing.isRevoked) {
       await RefreshToken.updateMany(
         { tokenFamily: existing.tokenFamily },
-        { isRevoked: true }
+        { isRevoked: true },
       ).session(session);
 
       throw new ErrorResponse(
-        'Refresh token reuse detected. Please login again.',
-        401
+        "Refresh token reuse detected. Please login again.",
+        401,
       );
     }
 
     // Expiry check
     if (existing.expiresAt < now) {
-      throw new ErrorResponse('Refresh token expired', 401);
+      throw new ErrorResponse("Refresh token expired", 401);
     }
 
     // Generate new token
@@ -222,14 +218,13 @@ const refreshAccessToken = asyncHandler(async (req, res, next) => {
           tokenHash: newRefreshHash,
           tokenFamily: existing.tokenFamily,
           expiresAt: new Date(
-            Date.now() +
-              process.env.REFRESH_TOKEN_EXPIRE * 24 * 60 * 60 * 1000
+            Date.now() + process.env.REFRESH_TOKEN_EXPIRE * 24 * 60 * 60 * 1000,
           ),
-          userAgent: req.headers['user-agent'],
+          userAgent: req.headers["user-agent"],
           ipAddress: req.ip,
         },
       ],
-      { session }
+      { session },
     );
 
     const newAccessToken = generateAccessToken(existing.user);
@@ -238,17 +233,17 @@ const refreshAccessToken = asyncHandler(async (req, res, next) => {
     session.endSession();
 
     // Set cookies
-    res.cookie('accessToken', newAccessToken, {
+    res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
       maxAge: process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000,
     });
 
-    res.cookie('refreshToken', newRefreshToken, {
+    res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
       maxAge: process.env.REFRESH_TOKEN_EXPIRE * 24 * 60 * 60 * 1000,
     });
 
@@ -257,7 +252,6 @@ const refreshAccessToken = asyncHandler(async (req, res, next) => {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     });
-
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -282,19 +276,19 @@ const deleteAccount = asyncHandler(async (req, res, next) => {
   const user = req.user;
 
   // Mark as deleted
-  user.status = 'deleted';
+  user.status = "deleted";
   await user.save();
 
   // Remove all refresh tokens
   await RefreshToken.deleteMany({ user: user._id });
 
   // Clear cookies
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
 
   res.status(200).json({
     success: true,
-    message: 'Account deleted successfully',
+    message: "Account deleted successfully",
   });
 });
 
@@ -305,30 +299,30 @@ const reactivateInitiate = asyncHandler(async (req, res, next) => {
   const { countryCode, phone } = req.body;
 
   if (!countryCode || !phone) {
-    return next(new ErrorResponse('Phone number is required', 400));
+    return next(new ErrorResponse("Phone number is required", 400));
   }
 
   const user = await User.findOne({
-    'phone.countryCode': countryCode,
-    'phone.number': phone,
+    "phone.countryCode": countryCode,
+    "phone.number": phone,
   });
 
   // Always generic response to avoid enumeration
-  if (!user || user.status !== 'deleted') {
+  if (!user || user.status !== "deleted") {
     return res.status(200).json({
       success: true,
-      message: 'If account exists, OTP has been sent.',
+      message: "If account exists, OTP has been sent.",
     });
   }
 
   await sendOtp({
     phone: { countryCode, number: phone },
-    purpose: 'reactivation',
+    purpose: "reactivation",
   });
 
   res.status(200).json({
     success: true,
-    message: 'If account exists, OTP has been sent.',
+    message: "If account exists, OTP has been sent.",
   });
 });
 
@@ -339,9 +333,7 @@ const reactivateConfirm = asyncHandler(async (req, res, next) => {
   const { countryCode, phone, otp } = req.body;
 
   if (!countryCode || !phone || !otp) {
-    return next(
-      new ErrorResponse('Phone number and OTP required', 400)
-    );
+    return next(new ErrorResponse("Phone number and OTP required", 400));
   }
 
   const session = await mongoose.startSession();
@@ -353,24 +345,24 @@ const reactivateConfirm = asyncHandler(async (req, res, next) => {
       {
         phone: { countryCode, number: phone },
         otp,
-        purpose: 'reactivation',
+        purpose: "reactivation",
       },
-      session
+      session,
     );
 
     const user = await User.findOne({
-      'phone.countryCode': countryCode,
-      'phone.number': phone,
+      "phone.countryCode": countryCode,
+      "phone.number": phone,
     }).session(session);
 
-    if (!user || user.status !== 'deleted') {
-      throw new ErrorResponse('Invalid reactivation request', 400);
+    if (!user || user.status !== "deleted") {
+      throw new ErrorResponse("Invalid reactivation request", 400);
     }
 
     // Reactivate
-    user.status = 'active';
+    user.status = "active";
     user.lastLoginAt = new Date();
-    user.lastLoginMethod = 'reactivation';
+    user.lastLoginMethod = "reactivation";
 
     await user.save({ session });
 
@@ -378,16 +370,21 @@ const reactivateConfirm = asyncHandler(async (req, res, next) => {
     const refreshToken = generateRefreshToken();
     const tokenFamily = crypto.randomUUID();
 
-    await RefreshToken.create([{
-      user: user._id,
-      tokenHash: hashToken(refreshToken),
-      tokenFamily,
-      expiresAt: new Date(
-        Date.now() + process.env.REFRESH_TOKEN_EXPIRE * 24 * 60 * 60 * 1000
-      ),
-      userAgent: req.headers['user-agent'],
-      ipAddress: req.ip,
-    }], { session });
+    await RefreshToken.create(
+      [
+        {
+          user: user._id,
+          tokenHash: hashToken(refreshToken),
+          tokenFamily,
+          expiresAt: new Date(
+            Date.now() + process.env.REFRESH_TOKEN_EXPIRE * 24 * 60 * 60 * 1000,
+          ),
+          userAgent: req.headers["user-agent"],
+          ipAddress: req.ip,
+        },
+      ],
+      { session },
+    );
 
     const accessToken = generateAccessToken(user._id);
 
@@ -395,17 +392,17 @@ const reactivateConfirm = asyncHandler(async (req, res, next) => {
     session.endSession();
 
     // Set cookies
-    res.cookie('accessToken', accessToken, {
+    res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
       maxAge: process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000,
     });
 
-    res.cookie('refreshToken', refreshToken, {
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
       maxAge: process.env.REFRESH_TOKEN_EXPIRE * 24 * 60 * 60 * 1000,
     });
 
@@ -414,7 +411,6 @@ const reactivateConfirm = asyncHandler(async (req, res, next) => {
       accessToken,
       refreshToken,
     });
-
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -422,13 +418,12 @@ const reactivateConfirm = asyncHandler(async (req, res, next) => {
   }
 });
 
-
 module.exports = {
-  loginWithOtp, 
+  loginWithOtp,
   logout,
   getMe,
   refreshAccessToken,
   deleteAccount,
-  reactivateInitiate, 
-  reactivateConfirm
+  reactivateInitiate,
+  reactivateConfirm,
 };

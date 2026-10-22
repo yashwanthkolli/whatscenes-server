@@ -8,6 +8,7 @@ const logger = require("./utils/logger");
 const healthRoutes = require("./routes/health");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
+const adminUserRoutes = require("./routes/adminUsers");
 const adminQuestionRoutes = require("./routes/adminQuestions");
 const adminQuestionnaireRoutes = require("./routes/adminQuestionnaires");
 const questionnaireRoutes = require("./routes/questionnaires");
@@ -18,6 +19,7 @@ const registrationRoute = require("./routes/registration.route");
 const adminRegistrationRoute = require("./routes/adminRegistration.route");
 const locationRoute = require("./routes/location.route");
 const prelaunchRoute = require("./routes/prelaunchWaitlist.routes");
+const adminPrelaunchWaitlistRoutes = require("./routes/adminPrelaunchWaitlist");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -54,6 +56,7 @@ securityMiddleware(app);
 app.use("/api/health", healthRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/admin/users", adminUserRoutes);
 app.use("/api/v1/admin/questions", adminQuestionRoutes);
 app.use("/api/v1/admin/questionnaires", adminQuestionnaireRoutes);
 app.use("/api/v1/questionnaires", questionnaireRoutes);
@@ -64,6 +67,7 @@ app.use("/api/v1/registrations", registrationRoute);
 app.use("/api/v1/admin/registrations", adminRegistrationRoute);
 app.use("/api/v1/location", locationRoute);
 app.use("/api/v1/prelaunch", prelaunchRoute);
+app.use("/api/v1/admin/prelaunch-waitlist", adminPrelaunchWaitlistRoutes);
 
 // Error handling middleware (should be last)
 app.use(errorHandler);
